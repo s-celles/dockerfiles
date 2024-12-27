@@ -1,4 +1,4 @@
-FROM alpine:3
+FROM gists/libtorrent:latest
 
 ARG VERSION
 
@@ -8,22 +8,26 @@ RUN set -ex && \
         automake \
         build-base \
         curl \
-        libcurl \
+        curl-dev \
         libsigc++3-dev \
         libtool \
-        linux-headers \
-        openssl-dev \
+        ncurses-dev \
         pkgconf \
         tinyxml2-dev \
-        zlib-dev \
         tar && \
-    mkdir -p /tmp/libtorrent && cd $_ && \
-    curl -sSL https://github.com/rakshasa/libtorrent/archive/refs/tags/v$VERSION.tar.gz | tar xz --strip 1 && \
+    mkdir -p /tmp/rtorrent && cd $_ && \
+    curl -sSL https://github.com/rakshasa/rtorrent/archive/refs/tags/v$VERSION.tar.gz | tar xz --strip 1 && \
     autoreconf -iv && \
-    ./configure --prefix=/usr --disable-debug --disable-instrumentation && \
+    ./configure --prefix=/usr \
+                --sysconfdir=/etc \
+                --mandir=/usr/share/man \
+                --localstatedir=/var \
+                --enable-ipv6 \
+                --disable-debug \
+                --with-xmlrpc-tinyxml2 && \
     make && make install && cd && \
     runDeps="$( \
-        scanelf --needed --nobanner /usr/lib/libtorrent.so.* \
+        scanelf --needed --nobanner /usr/bin/rtorrent \
             | awk '{ gsub(/,/, "\nso:", $2); print "so:" $2 }' \
             | xargs -r apk info --installed \
             | sort -u \
