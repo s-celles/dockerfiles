@@ -1,4 +1,4 @@
-FROM gists/libtorrent:latest
+FROM alpine:3
 
 ARG VERSION
 
@@ -9,13 +9,26 @@ RUN set -ex && \
         build-base \
         curl \
         curl-dev \
+        libcurl \
         libsigc++3-dev \
         libtool \
+        linux-headers \
         ncurses-dev \
+        openssl-dev \
         pkgconf \
         tinyxml2-dev \
+        zlib-dev \
         tar && \
-    mkdir -p /tmp/rtorrent && cd $_ && \
+    # building libtorrent
+    mkdir -p /tmp/libtorrent && cd /tmp/libtorrent && \
+    curl -sSL https://github.com/rakshasa/libtorrent/archive/refs/tags/v$VERSION.tar.gz | tar xz --strip 1 && \
+    autoreconf -iv && \
+    ./configure --prefix=/usr \
+                --disable-debug \
+                --disable-instrumentation && \
+    make && make install && \
+    # building rtorrent
+    mkdir -p /tmp/rtorrent && cd /tmp/rtorrent && \
     curl -sSL https://github.com/rakshasa/rtorrent/archive/refs/tags/v$VERSION.tar.gz | tar xz --strip 1 && \
     autoreconf -iv && \
     ./configure --prefix=/usr \
